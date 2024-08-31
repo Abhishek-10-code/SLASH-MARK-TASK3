@@ -1,0 +1,200 @@
+WEATHER FORECAST WEBSITE
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Forecast</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Weather Forecast</h1>
+            <p>Check the weather for the current day and the next 5 days</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="search-box">
+            <input type="text" id="location-input" placeholder="Enter your location">
+            <button onclick="getWeather()">Get Weather</button>
+            <button onclick="getWeatherByLocation()">Detect Location</button>
+        </div>
+
+        <div id="weather-container">
+            <!-- Weather data will be displayed here -->
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 Weather Forecast App</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+    background-color: #f4f4f4;
+}
+
+header {
+    background-color: #4CAF50;
+    color: #fff;
+    padding: 10px 0;
+    text-align: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 2.5rem;
+}
+
+header p {
+    font-size: 1.2rem;
+    margin: 0;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.search-box {
+    margin-bottom: 20px;
+}
+
+.search-box input {
+    padding: 10px;
+    font-size: 1rem;
+    width: 80%;
+    max-width: 400px;
+    margin-right: 10px;
+}
+
+.search-box button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    background-color: #4CAF50;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+.search-box button:hover {
+    background-color: #45a049;
+}
+
+#weather-container {
+    margin-top: 20px;
+}
+
+.weather-card {
+    background-color: #f1f1f1;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 5px;
+    text-align: left;
+}
+
+.weather-card h3 {
+    margin: 0 0 10px;
+}
+
+.weather-card p {
+    margin: 5px 0;
+}
+
+footer {
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    padding: 10px 0;
+}
+
+footer p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+
+
+const apiKey = 'YOUR_API_KEY'; // Replace with your OpenWeatherMap API key
+
+function getWeather() {
+    const location = document.getElementById('location-input').value;
+    if (location) {
+        fetchWeatherData(location);
+    } else {
+        alert('Please enter a location.');
+    }
+}
+
+function getWeatherByLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            fetchWeatherData(null, lat, lon);
+        });
+    } else {
+        alert('Geolocation is not supported by this browser.');
+    }
+}
+
+function fetchWeatherData(location, lat = null, lon = null) {
+    let url = '';
+    if (location) {
+        url = `https://api.openweathermap.org/data/2.5/forecast?q=${location}&units=metric&appid=${apiKey}`;
+    } else if (lat && lon) {
+        url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
+    }
+
+    fetch(url)
+        .then(response => response.json())
+        .then(data => displayWeatherData(data))
+        .catch(error => console.error('Error fetching the weather data:', error));
+}
+
+function displayWeatherData(data) {
+    const weatherContainer = document.getElementById('weather-container');
+    weatherContainer.innerHTML = '';
+
+    const city = data.city.name;
+    const country = data.city.country;
+
+    const forecast = data.list.filter((item, index) => index % 8 === 0).slice(0, 5);
+
+    forecast.forEach(day => {
+        const date = new Date(day.dt_txt);
+        const temp = day.main.temp;
+        const description = day.weather[0].description;
+        const humidity = day.main.humidity;
+        const windSpeed = day.wind.speed;
+
+        const weatherCard = `
+            <div class="weather-card">
+                <h3>${city}, ${country} - ${date.toDateString()}</h3>
+                <p>Temperature: ${temp}°C</p>
+                <p>Weather: ${description}</p>
+                <p>Humidity: ${humidity}%</p>
+                <p>Wind Speed: ${windSpeed} m/s</p>
+            </div>
+        `;
+
+        weatherContainer.innerHTML += weatherCard;
+    });
+}
